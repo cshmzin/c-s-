@@ -5,12 +5,14 @@ from tkinter import scrolledtext
 import socket
 import time
 from PIL import ImageTk, Image
+import sys
 
 
 client = socket.socket()#创建实例
-ip_port = ("192.168.43.16",8888)#绑定ip和port
+ip_port = ("192.168.43.15",8888)#绑定ip和port
 ip_port2 = ("103.46.128.41",48237)
-client.connect(ip_port2)#连接主机
+ip_port3 =('111.231.116.244',47871)
+client.connect(ip_port)#连接主机
 
 #登录注册主页面
 window = tk.Tk()
@@ -248,7 +250,6 @@ def login():#登录后进入主页面
 									
 						def showtime():        #时间模块，开启之后会影响运行速度
 							
-							'''
 							timeText.delete(1.0,END)
 							timeText2.delete(1.0,END)
 							Time1 = time.strftime("   %H:%M:%S",time.localtime()) + '\n '
@@ -264,8 +265,6 @@ def login():#登录后进入主页面
 							
 							timeText.after(60000,showtime)
 							timeText2.after(60000,showtime)
-							'''
-							pass		
 							
 							
 						def cancelMsg():                #取消消息
@@ -277,7 +276,7 @@ def login():#登录后进入主页面
 							
 						def sendMsgEvent(event):        #发送消息事件
 							if event.keysym == "Return":  #按回车键可发送
-								tk.messagebox.showwarning(message='这个功能我不做!'+'\n'+'为什么？'+'\n'+'因为任性')
+								sendMsg()
 								
 								
 						def red():                      #Canvas背景色控制
@@ -310,15 +309,6 @@ def login():#登录后进入主页面
 							txtText.delete(0.0,END)
 							txtText.insert(END,book[txtSpinbox.get()])
 							 
-						def message():                  #选择联系人
-							try:
-								onename1 = listLianxi.get(listLianxi.curselection())
-								onename = onename1.replace("在线联系人------","",1)
-							except BaseException:
-								tk.messagebox.showwarning(message='请选择用户!')
-							else:
-								SerchLabel.delete('0.0',END)
-								SerchLabel.insert(END,onename)
 
 							
 						window2.destroy()
@@ -366,16 +356,11 @@ def login():#登录后进入主页面
 									 selectbackground='blue',             #选中文本的颜色
 									 state=NORMAL)                        #文本框是否启用 NORMAL/DISABLED
 						txtText.insert(END,'    欢迎来到超级聊天室！\n    此软件用于C/S的临时聊天软件，采用udp协议。\n    C/S分布式模式，是计算机用语。C是指Client，S是指Server。C/S模式就是指客户端/服务器模式。是计算机软件协同工作的一种模式。\n    随着计算机网络技术的成熟和应用普及，特别是局域网的发展、PC机的出现，越来越多的用户和企业开始使用计算机管理一些事务。PC机的资源没有大型、中型甚至小型主机丰富，但将多台PC机联成网，必然会增加资源含量，各个用户都在网络上来共享所有资源。\n    根据客户/服务器（Client/Server简记为C/S）体系结构的概念，至少用两台计算机来分别充当客户机和服务器角色。客户端可以是X86体系的风机或RISC体系的工作站等，而服务器端硬件一般比较高档。\n    比如：高档PC服务器或SUN专用服务器；操作系统也比较高档，比如： Windows NT和 Unix。')
-						SerchLabel = Text(frmA1,width=8,height=2)												  # insert(插入位置，插入内容)
 						
 						#2.Button控件
 						btnSend = Button(frmB3, text='发 送', width = 8,cursor='heart', command=lambda:sendMsg())
 						btnCancel = Button(frmB3, text='取消', width = 8,cursor='shuttle', command=cancelMsg)
 						btnExit = Button(frmB3, text='退 出', width = 8,cursor='heart', command=exitMsg)
-						btnSerch=Button(frmA1, text='选择联系人',         #button的显示内容
-										width = 9,height=1,               #宽和高
-										cursor='man',                     #光标样式     
-										command = message)                 #回调函数
 										
 						
 									
@@ -459,8 +444,7 @@ def login():#登录后进入主页面
 						###******控件布局******### 
 						btnSend.grid(row=0, column=0)
 						btnCancel.grid(row=0, column=1)
-						btnExit.grid(row=0,column=2,padx=150)
-						btnSerch.grid(row=0,column=0)
+						btnExit.grid(row=0,column=2,padx=100)
 						
 						nameLabel.grid()
 						sizeLabel.grid(row=0,column=0)
@@ -484,7 +468,6 @@ def login():#登录后进入主页面
 						txtText.grid(row=1,column=0,pady=5)
 						sizeScale.grid(row=0,column=1)
 						txtSpinbox.grid(row=0,column=0)
-						SerchLabel.grid(row=0,column=1,padx=24)
 						
 
 						#主事件循环
@@ -510,6 +493,8 @@ def login():#登录后进入主页面
 				date = client.recv(1024)
 				if date == b"yes":
 					client.send(groupname.encode())
+					date = client.recv(1024)
+					client.send(name.encode())
 					date = client.recv(1024)
 					if date == b'no':
 						tk.messagebox.showwarning(message='没有此群聊')
@@ -559,33 +544,73 @@ def login():#登录后进入主页面
 										
 										date = client.recv(1024)
 										Tell = date.decode()
-										text_msglist.insert(END, Sname+'  :'+Tell, 'green')
+										text_msglist.insert(END, Sname+'  :'+Tell, 'red')
 							
 							text_msglist.after(10000,showmessage)			
-						     
+							
+						def exitmessage():
+							root.destroy()
+							main_window()
+						 
+						def sendEvent(event):
+							if event.keysym == "Return":  #按回车键可发送
+								sendmessage()
+							
+						def btn_newy():#显示用户函数
+							gi = "yes"
+							gp = "ok"
+							selection = "groupxianshi"
+							client.send(selection.encode())
+							listLianxi1.delete(0,END)
+							date = client.recv(1024)
+							if date == b"yes":
+								client.send(groupname.encode())
+								date = client.recv(1024)
+								client.send(gi.encode())
+								while True:
+									date = client.recv(1024)
+									if date == b"Nomore":
+										client.send(gp.encode())
+										break
+									else:
+										nowname = date.decode()
+										listLianxi1.insert(END,"在线联系人------"+nowname)
+										client.send(gi.encode())	    
+								
+								listLianxi1.delete(0)
 								
 								
 								
 							
 						 
 						#创建几个frame作为容器
-						frame_left_top   = Frame(width=380, height=270, bg='white')
-						frame_left_center  = Frame(width=380, height=100, bg='white')
+						frame_left_top   = Frame(width=380, height=270)
+						frame_left_center  = Frame(width=380, height=100)
 						frame_left_bottom  = Frame(width=380, height=26)
-						frame_right     = Frame(width=170, height=400, bg='white')
+						frame_right     = Frame(width=170, height=270)
 						
 						##创建需要的几个元素
 						text_msglist    = Text(frame_left_top)
 						text_msg      = Text(frame_left_center);
+						text_msg.bind("<KeyPress-Return>", sendEvent)    #事件绑定，定义快捷键
 						button_sendmsg   = Button(frame_left_bottom, text='发送', command=sendmessage)
+						button_exitmsg   = Button(frame_left_bottom, text='退出', command=exitmessage)
+						
 						#创建一个绿色的tag
 						text_msglist.tag_config('green', foreground='#008B00')
+						text_msglist.tag_config('red', foreground='#FF0000')
+						
+						  
+						#Listbox控件
+						listLianxi1 = Listbox(frame_right, width=22,height=20,)
 						
 						#使用grid设置各个容器位置
 						frame_left_top.grid(row=0, column=0, padx=2, pady=5)
 						frame_left_center.grid(row=1, column=0, padx=2, pady=5)
 						frame_left_bottom.grid(row=2, column=0)
-						frame_right.grid(row=0, column=1, rowspan=3, padx=4, pady=5)
+						frame_right.grid(row=0, column=1, padx=4, pady=5)
+						
+						frame_right.grid_propagate(0)
 						frame_left_top.grid_propagate(0)
 						frame_left_center.grid_propagate(0)
 						frame_left_bottom.grid_propagate(0)
@@ -594,8 +619,12 @@ def login():#登录后进入主页面
 						text_msglist.grid()
 						text_msg.grid()
 						button_sendmsg.grid(sticky=E)
+						button_exitmsg.grid(row=0,column = 1,padx = 280)
+						listLianxi1.grid(row=0,column=0)
 						
+
 						
+						btn_newy()
 						showmessage()
 						#主事件循环
 						root.mainloop()
@@ -613,6 +642,7 @@ def login():#登录后进入主页面
 			group.place(x=165,y=65)
 			group = tk.Button(window6,text='确定', width=7, command = in_group)
 			group.place(x=10,y=65)
+			
 			
 		def btn_new6(): #创建群聊
 			window6 = tk.Toplevel(window2)
@@ -652,7 +682,70 @@ def login():#登录后进入主页面
 			tk.messagebox.showwarning(message='自己创建的群聊可不能退噢！！')
 
 		def btn_new8(): #机器人聊天室
-			pass
+			window2.destroy()
+			root = Tk()
+			root.title('与机器人聊天中')
+			#发送按钮事件
+			
+			def sendmessage():
+			  #在聊天内容上方加一行 显示发送人及发送时间
+			  msg = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()) +'\n '
+			  msg2 = text_msg.get('0.0', END)+'\n'
+			  
+			  selection = "sendrobet"
+			  client.send(selection.encode())
+			  date = client.recv(1024)
+			  client.send(msg2.encode())
+			  date = client.recv(1024)
+			  robet = date.decode()
+			  
+			  text_msglist.insert(END, msg, 'green')
+			  text_msglist.insert(END, '我:  '+text_msg.get('0.0', END))
+			  text_msglist.insert(END, 'robot: '+robet+'\n','red')
+			  text_msg.delete('0.0', END) 
+			  
+			def sendEvent(event):
+				if event.keysym == "Return":  #按回车键可发送
+					sendmessage()
+			  
+			def exitmessage():
+				root.destroy()
+				main_window()
+			 
+			#创建几个frame作为容器
+			frame_left_top   = Frame(width=380, height=270)
+			frame_left_center  = Frame(width=380, height=100)
+			frame_left_bottom  = Frame(width=380, height=20)
+			frame_right     = Frame(width=170, height=400)
+			
+			##创建需要的几个元素
+			text_msglist    = Text(frame_left_top)
+			text_msg      = Text(frame_left_center);
+			text_msg.bind("<KeyPress-Return>", sendEvent)    #事件绑定，定义快捷键
+			button_sendmsg   = Button(frame_left_bottom, text='发送', command=sendmessage)
+			button_exit = Button(frame_left_bottom, text='退出', command=exitmessage)
+			#创建一个绿色的tag
+			
+			text_msglist.tag_config('green', foreground='#008B00')
+			text_msglist.tag_config('red', foreground='#FF0000')
+			#使用grid设置各个容器位置
+			frame_left_top.grid(row=0, column=0, padx=2, pady=5)
+			frame_left_center.grid(row=1, column=0, padx=2, pady=5)
+			frame_left_bottom.grid(row=2, column=0)
+			frame_right.grid(row=0, column=1, rowspan=3, padx=4, pady=5)
+			frame_left_top.grid_propagate(0)
+			frame_left_center.grid_propagate(0)
+			frame_left_bottom.grid_propagate(0)
+			
+			#把元素填充进frame
+			text_msglist.grid()
+			text_msg.grid()
+			button_sendmsg.grid(sticky=E)
+			button_exit.grid(row=0,column = 1,padx = 280)
+			#主事件循环
+			root.mainloop()
+			
+			
 		def btn_new9(): #习大大聊天
 			tk.messagebox.showwarning(message='你觉得可能吗？？？')
 		def btn_new10(): #关于我们
@@ -677,6 +770,13 @@ def login():#登录后进入主页面
 			canvas1.create_window(87,190,width=100,window=la4)
 			canvas1.create_window(87,220,width=100,window=la5)
 			
+		def btn_new11():#退出
+				selection = "exit"
+				client.send(selection.encode())
+				
+				date = client.recv(1024)
+				window2.destroy()
+				sys.exit()
 			
 			
 			
@@ -697,6 +797,7 @@ def login():#登录后进入主页面
 		
 
 		btn_new4 = tk.Button(window2, text='获取信息',command=btn_new4)	
+		
 
 		
 		
@@ -723,6 +824,8 @@ def login():#登录后进入主页面
 		filemenu = Menu(mb3, tearoff=False)
 		filemenu.add_command(label='个人信息', command=btn_new3)
 		filemenu.add_command(label='关于我们', command=btn_new10)
+		filemenu.add_separator()   #添加分割线
+		filemenu.add_command(label='退出登录', command=btn_new11)
 		mb3.config(menu=filemenu)
 
 			
@@ -760,7 +863,6 @@ def login():#登录后进入主页面
 				client.send(pwd.encode())
 				date = client.recv(1024)
 				if date == b"yes":
-					tk.messagebox.showinfo(message='你成功了进入了超级聊天室')
 					window.destroy()
 					main_window()
 				if date == b"same":
@@ -875,7 +977,10 @@ def sign_up():
 
 
 
-
+def loginEvent(event):
+	if event.keysym == "Return":  #按回车键可发送
+		login()
+	
 
 
 
@@ -896,6 +1001,8 @@ entry_name.place(x=160, y=150)
 var_pwd = tk.StringVar()
 entry_pwd = tk.Entry(window, textvariable=var_pwd, width=30,show='*')#`show`这个参数将输入的密码变为`***`的形式
 entry_pwd.place(x=160, y=190)
+
+entry_pwd.bind("<KeyPress-Return>", loginEvent)    #事件绑定，定义快捷键
 
 btn_login = tk.Button(window, text='Login', width=8,command=login)#定义一个`button`按钮，名为`Login`,触发命令为`usr_login`
 btn_login.place(x=170, y=230)

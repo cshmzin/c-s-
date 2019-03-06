@@ -1,10 +1,13 @@
 ﻿#导入模块
 import socketserver
-import json
 import urllib.request
 import pymysql
 import pymysql.cursors
 from DBUtils.PooledDB import PooledDB
+import requests
+import json
+
+key = '97c18ad5d7024c5b94187d41dada9cda'
 
 
 #连接数据库
@@ -64,7 +67,6 @@ class MyServer(socketserver.BaseRequestHandler):
 							conn.send(gi.encode())
 							cur.execute("UPDATE user SET state = 1 WHERE name = '"+Name+"' AND pwd = '"+Pwd+"'")
 							cur.execute("UPDATE xingxi SET state = 1 WHERE name = '"+Name+"'")
-							cur.execute("UPDATE allgroup SET state = 1 WHERE name = '"+Name+"'")
 							db.commit()
 							self.allname = Name
 							self.allpwd = Pwd
@@ -122,7 +124,7 @@ class MyServer(socketserver.BaseRequestHandler):
 				conn.send(gi.encode())
 				date = conn.recv(1024)
 				print(date.decode())
-				cur.execute("SELECT sname FROM xingxi WHERE state = 1")#获取登录状态的用户
+				cur.execute("SELECT sname FROM xingxi WHERE state = 1 ")#获取登录状态的用户
 				results = cur.fetchall()
 				db.commit()
 				for row in results:
@@ -142,7 +144,7 @@ class MyServer(socketserver.BaseRequestHandler):
 				conn.send(gi.encode())
 				date = conn.recv(1024)
 				print(date.decode())
-				cur.execute("SELECT sname FROM xingxi WHERE state = 1")#获取用户
+				cur.execute("SELECT sname FROM xingxi WHERE state = 1 ")#获取用户
 				results = cur.fetchall()
 				db.commit()
 				for row in results:
@@ -329,8 +331,10 @@ class MyServer(socketserver.BaseRequestHandler):
 				conn.send(gi.encode())  
 				date = conn.recv(1024)
 				groupname = date.decode() #获取账号
-				cur.execute("insert into allgroup(groupid,name,state) values(%s,%s,1)",(groupname,name))
+				
+				cur.execute("insert into allgroup(groupid,name,who) values(%s,%s,1)",(groupname,name))
 				db.commit()
+				
 				conn.send(gp.encode())	
 				
 				
@@ -344,6 +348,10 @@ class MyServer(socketserver.BaseRequestHandler):
 				date = conn.recv(1024)
 				groupname = date.decode()
 				
+				conn.send(gi.encode())
+				date = conn.recv(1024)
+				gname = date.decode()
+								
 				cur.execute("SELECT groupid FROM allgroup")#获取数据库信息
 				results = cur.fetchall()
 				db.commit()
@@ -355,6 +363,8 @@ class MyServer(socketserver.BaseRequestHandler):
 				
 				if i == 1:
 					conn.send(gp.encode())
+					cur.execute("insert into allgroup(groupid,name,who) values(%s,%s,0)",(groupname,gname))
+					db.commit()
 				else:
 					conn.send(gy.encode())
 					
@@ -413,21 +423,65 @@ class MyServer(socketserver.BaseRequestHandler):
 					
 				conn.send(gp.encode())
 				
+			if date == b'exit':#退出。。。。。。。。。。。。。。。
+				cur.execute("UPDATE user SET state = 0 WHERE name = '"+self.allname+"' AND pwd = '"+self.allpwd+"'")
+				cur.execute("UPDATE xingxi SET state = 0 WHERE name = '"+self.allname+"'")
+				cur.execute("DELETE FROM allgroup WHERE name = '"+self.allname+"' AND who = 0")
+				db.commit()
+				print("登陆结束!"+self.allname)
+				conn.send(gp.encode())
+		
+			if date == b"groupxianshi": #            显示在线群用户操作。。。。。。。。。。。。。。
+				gi = "yes"
+				gy = "no"
+				gp = "Nomore"
+				print("用户",self.client_address,"请求显示")
+				conn.send(gi.encode())
+				date = conn.recv(1024)
+				groupname = date.decode()
 				
-		
-		
-		
+				conn.send(gi.encode())
+				date = conn.recv(1024)
+				print(date.decode())
+				
+				cur.execute("SELECT name FROM allgroup WHERE groupid = '"+groupname+"'")#获取登录状态的用户
+				results = cur.fetchall()
+				db.commit()
+				for row in results:
+					Name = row[0]
+					print(Name)
+					conn.send(Name.encode())
+					date = conn.recv(1024)
+					print(date.decode())
+				conn.send(gp.encode())
+				print(self.client_address,"显示完毕")	
+				
+			if date == b'sendrobet':#                  机器人聊天。。。。。。。。。。。。。。。。。。
+				gi = 'yes'
+				print('机器人聊天开始')
+				conn.send(gi.encode())
+				date = conn.recv(1024)
+				info = date.decode() #获取账号
+				
+				url = 'http://www.tuling123.com/openapi/api?key='+key+'&info='+info
+				res = requests.get(url)
+				res.encoding = 'utf-8'
+				jd = json.loads(res.text)
+				jp = jd['text']
+				 
+				conn.send(jp.encode())
+				
+				
 		conn.close()	
 		
 	
 	def finish(self):
 		cur.execute("UPDATE user SET state = 0 WHERE name = '"+self.allname+"' AND pwd = '"+self.allpwd+"'")
 		cur.execute("UPDATE xingxi SET state = 0 WHERE name = '"+self.allname+"'")
-		cur.execute("UPDATE allgroup SET state = 0 WHERE name = '"+self.allname+"'")
 		db.commit()
 		print("登陆结束!"+self.allname)
 
 
-sk = socketserver.ThreadingTCPServer(("192.168.43.16",8888),MyServer)#创建多线程实例
+sk = socketserver.ThreadingTCPServer(("192.168.43.15",8888),MyServer)#创建多线程实例
 sk.serve_forever()
 
